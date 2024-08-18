@@ -1,56 +1,54 @@
 package com.hotelreservation.hotelreservation.controller;
 
-import com.hotelreservation.hotelreservation.entity.Reservation;
+
+
+import com.hotelreservation.hotelreservation.persistence.mapper.ReservationDto;
 import com.hotelreservation.hotelreservation.sevice.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.List;
 
 @RestController
 @RequestMapping("/reservations")
 public class ReservationController {
 
+    private final ReservationService reservationService;
+
     @Autowired
-    private ReservationService reservationService;
-
-
-    @GetMapping
-    public ResponseEntity<Set<Reservation>> getAllReservations() {
-        return ResponseEntity.ok(reservationService.getAllReservations());
+    public ReservationController(ReservationService reservationService) {
+        this.reservationService = reservationService;
     }
 
+    @GetMapping
+    public ResponseEntity<List<ReservationDto>> getAllReservations() {
+        List<ReservationDto> reservations = reservationService.getAllReservations();
+        return ResponseEntity.ok(reservations);
+    }
 
     @PostMapping
-    public ResponseEntity<Reservation> createReservation(@RequestBody Reservation reservation) {
-        Reservation createdReservation = reservationService.createReservation(reservation);
+    public ResponseEntity<ReservationDto> createReservation(@RequestBody ReservationDto reservationDto) {
+        ReservationDto createdReservation = reservationService.createReservation(reservationDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdReservation);
     }
 
-
     @GetMapping("/{id}")
-    public ResponseEntity<Reservation> getReservationById(@PathVariable Integer id) {
-        Optional<Reservation> reservation = reservationService.getReservationById(id);
-        return reservation.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    public ResponseEntity<ReservationDto> getReservationById(@PathVariable Integer id) {
+        ReservationDto reservationDto = reservationService.getReservationById(id);
+        return ResponseEntity.ok(reservationDto);
     }
-
 
     @PutMapping("/{id}")
-    public ResponseEntity<Reservation> updateReservation(@PathVariable Integer id, @RequestBody Reservation updatedReservation) {
-        Optional<Reservation> reservation = reservationService.updateReservation(id, updatedReservation);
-        return reservation.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    public ResponseEntity<ReservationDto> updateReservation(@PathVariable Integer id, @RequestBody ReservationDto reservationDto) {
+        ReservationDto updatedReservation = reservationService.updateReservation(id, reservationDto);
+        return ResponseEntity.ok(updatedReservation);
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReservation(@PathVariable Integer id) {
-        boolean deleted = reservationService.deleteReservation(id);
-        return deleted ? ResponseEntity.noContent().build()
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        reservationService.deleteReservation(id);
+        return ResponseEntity.noContent().build();
     }
 }

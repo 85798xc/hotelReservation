@@ -1,80 +1,58 @@
 package com.hotelreservation.hotelreservation.sevice;
 
+
 import com.hotelreservation.hotelreservation.entity.Reservation;
+import com.hotelreservation.hotelreservation.persistence.mapper.ReservationDto;
+import com.hotelreservation.hotelreservation.persistence.mapper.ReservationMapper;
+import com.hotelreservation.hotelreservation.persistence.repository.ReservationRepository;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
 
-    private static final String FILE_PATH = "reservations.ser";
-    private Set<Reservation> reservations = new HashSet<>();
-    private int currentId = 1;
+    private final ReservationRepository reservationRepository;
+    private final ReservationMapper reservationMapper;
 
-    public ReservationService() {
-        loadReservations();
+    public ReservationService(ReservationRepository reservationRepository, ReservationMapper reservationMapper) {
+        this.reservationRepository = reservationRepository;
+        this.reservationMapper = reservationMapper;
     }
 
-    public Set<Reservation> getAllReservations() {
-        return reservations;
-    }
-
-    public Reservation createReservation(Reservation reservation) {
-        reservation.setId(currentId++);
-        reservations.add(reservation);
-        saveReservations();
-        return reservation;
-    }
-
-    public Optional<Reservation> getReservationById(Integer id) {
+    public List<ReservationDto> getAllReservations() {
+        List<Reservation> reservations = reservationRepository.query(reservation -> true); // Use an appropriate specification
         return reservations.stream()
-                .filter(reservation -> reservation.getId().equals(id))
-                .findFirst();
+                .map(reservationMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Optional<Reservation> updateReservation(Integer id, Reservation updatedReservation) {
-        return getReservationById(id).map(existingReservation -> {
-            existingReservation.setClientFullName(updatedReservation.getClientFullName());
-            existingReservation.setRoomNumber(updatedReservation.getRoomNumber());
-            existingReservation.setReservationDates(updatedReservation.getReservationDates());
-            saveReservations();
-            return existingReservation;
-        });
+    public ReservationDto createReservation(ReservationDto reservationDto) {
+        Reservation reservation = reservationMapper.toEntity(reservationDto);
+        reservationRepository.createReservation(reservation);
+        return reservationMapper.toDto(reservation); // Return the created ReservationDto
     }
 
-    public boolean deleteReservation(Integer id) {
-        boolean removed = reservations.removeIf(reservation -> reservation.getId().equals(id));
-        if (removed) {
-            saveReservations();
+    public ReservationDto getReservationById(Integer id) {
+        Optional<Reservation> optionalReservation = reservationRepository.query(reservation -> reservation.getId().equals(id)).stream().findFirst();
+        Reservation reservation = optionalReservation.orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
+        return reservationMapper.toDto(reservation);
+    }
+
+    public ReservationDto updateReservation(Integer id, ReservationDto reservationDto) {
+        Reservation reservationUpdateTo = reservationMapper.toEntity(reservationDto);
+        Optional<Reservation> optionalReservation = reservationRepository.updateReservation(id, reservationUpdateTo);
+        Reservation reservation = optionalReservation.orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
+        return reservationMapper.toDto(reservation); // Return the updated ReservationDto
+    }
+
+    public void deleteReservation(Integer id) {
+        List<Reservation> reservations = reservationRepository.query(reservation -> reservation.getId().equals(id));
+        if (reservations.isEmpty()) {
+            throw new RuntimeException("Reservation not found with id: " + id);
         }
-        return removed;
-    }
-
-    private void saveReservations() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
-            oos.writeObject(reservations);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void loadReservations() {
-        File file = new File(FILE_PATH);
-        if (file.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-                reservations = (Set<Reservation>) ois.readObject();
-                currentId = reservations.stream()
-                        .mapToInt(Reservation::getId)
-                        .max()
-                        .orElse(0) + 1;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
+        reservationRepository.deleteReservation(reservations.get(0));
     }
 }
