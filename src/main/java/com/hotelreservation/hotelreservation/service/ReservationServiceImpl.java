@@ -1,4 +1,4 @@
-package com.hotelreservation.hotelreservation.sevice;
+package com.hotelreservation.hotelreservation.service;
 
 
 import com.hotelreservation.hotelreservation.entity.Reservation;
@@ -12,12 +12,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class ReservationService {
+public class ReservationServiceImpl implements ReservationService{
 
     private final ReservationRepository reservationRepository;
     private final ReservationMapper reservationMapper;
 
-    public ReservationService(ReservationRepository reservationRepository, ReservationMapper reservationMapper) {
+    public ReservationServiceImpl(ReservationRepository reservationRepository, ReservationMapper reservationMapper) {
         this.reservationRepository = reservationRepository;
         this.reservationMapper = reservationMapper;
     }
@@ -32,7 +32,7 @@ public class ReservationService {
     public ReservationDto createReservation(ReservationDto reservationDto) {
         Reservation reservation = reservationMapper.toEntity(reservationDto);
         reservationRepository.createReservation(reservation);
-        return reservationMapper.toDto(reservation); // Return the created ReservationDto
+        return reservationMapper.toDto(reservation);
     }
 
     public ReservationDto getReservationById(Integer id) {
@@ -45,7 +45,7 @@ public class ReservationService {
         Reservation reservationUpdateTo = reservationMapper.toEntity(reservationDto);
         Optional<Reservation> optionalReservation = reservationRepository.updateReservation(id, reservationUpdateTo);
         Reservation reservation = optionalReservation.orElseThrow(() -> new RuntimeException("Reservation not found with id: " + id));
-        return reservationMapper.toDto(reservation); // Return the updated ReservationDto
+        return reservationMapper.toDto(reservation);
     }
 
     public void deleteReservation(Integer id) {
