@@ -13,13 +13,19 @@ public class InMemoryReservationRepository implements ReservationRepository {
 
     private Set<Reservation> reservations = new HashSet<>();
     private static final String DATA_FILE_PATH = "reservations.ser";
+    private static int idCounter = 0;
 
     public InMemoryReservationRepository() {
         loadReservationsFromFile();
+        idCounter = reservations.stream()
+                .mapToInt(Reservation::getId)
+                .max()
+                .orElse(0);
     }
 
     @Override
     public void createReservation(Reservation reservation) {
+        reservation.setId(++idCounter);
         reservations.add(reservation);
         saveReservationsToFile();
     }
