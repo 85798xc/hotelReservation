@@ -26,7 +26,7 @@ public class InMemoryReservationRepository implements ReservationRepository {
 
     @Override
     public Optional<Reservation> updateReservation(Integer id, Reservation reservation) {
-        // Find and remove existing reservation
+
         boolean removed = reservations.removeIf(r -> r.getId().equals(id));
         if (removed) {
             reservations.add(reservation);
@@ -55,7 +55,7 @@ public class InMemoryReservationRepository implements ReservationRepository {
         } catch (FileNotFoundException e) {
             reservations = new HashSet<>();
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace(); // Handle error
+            e.printStackTrace();
         }
     }
 
@@ -63,7 +63,7 @@ public class InMemoryReservationRepository implements ReservationRepository {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE_PATH))) {
             oos.writeObject(reservations);
         } catch (IOException e) {
-            e.printStackTrace(); // Handle error
+            e.printStackTrace();
         }
     }
 }
